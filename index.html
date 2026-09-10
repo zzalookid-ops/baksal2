@@ -322,18 +322,18 @@
           </div>
 
           <div class="form-group">
-            <label for="bet-amount">배팅 금액 (원):</label>
+            <label for="bet-amount">베팅 금액 (원):</label>
             <input type="number" id="bet-amount" value="1000" min="100" step="100">
           </div>
 
-          <!-- 편리한 배팅 금액 조절 버튼 -->
+          <!-- 편리한 베팅 금액 조절 버튼 -->
           <div class="quick-bet-container">
             <button class="btn-quick" onclick="adjustBet(-1000)">-1000</button>
             <button class="btn-quick" onclick="adjustBet(1000)">+1000</button>
             <button class="btn-quick btn-allin" onclick="setAllIn()">올인</button>
           </div>
 
-          <button id="start-btn" onclick="startRace()">배팅하고 레이스 시작</button>
+          <button id="start-btn" onclick="startRace()">베팅하고 레이스 시작</button>
         </div>
       </div>
 
@@ -376,8 +376,8 @@
 
       <hr style="border-color: #57606f; margin: 15px 0;">
       <p style="text-align: left; font-size: 0.92rem;">  
-        처음엔 따는 것 같다가 배팅금을 올리는 순간 손쓸 수도 없이 파산하지 않으셨나요?<br><br>
-        실제 불법 도박 사이트도 <b>초반에 연승을 시켜 판을 키우게 만든 뒤, 배팅금이 커지면 승률을 조작</b>하여 단번에 판돈을 갈취합니다.
+        처음엔 따는 것 같다가 베팅금을 올리는 순간 손쓸 수도 없이 파산하지 않으셨나요?<br><br>
+        실제 불법 도박 사이트도 <b>초반에 연승을 시켜 판을 키우게 만든 뒤, 베팅금이 커지면 승률을 조작</b>하여 단번에 판돈을 갈취합니다.
       </p>
       
       <a href="https://www.kcgp.or.kr/portal/onlnCnslt/chatRoom/info.do?menuNo=200064" target="_blank" class="help-call">
@@ -496,11 +496,11 @@
       const resultDiv = document.getElementById('result');
 
       if (isNaN(betAmount) || betAmount <= 0) {
-        alert('올바른 배팅 금액을 입력하세요.');
+        alert('올바른 베팅 금액을 입력하세요.');
         return;
       }
       if (betAmount > balance) {
-        alert('보유 금액보다 많은 금액을 배팅할 수 없습니다!');
+        alert('보유 금액보다 많은 금액을 베팅할 수 없습니다!');
         return;
       }
 
