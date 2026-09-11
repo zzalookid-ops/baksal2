@@ -77,16 +77,59 @@
     .betting-form {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 15px;
     }
 
-    .form-group {
+    .form-group-custom {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .form-label {
+      font-size: 0.95rem;
+      font-weight: bold;
+      color: #dcdde1;
+    }
+
+    /* 3개 버튼 선택 박스 스타일 */
+    .option-grid {
+      display: flex;
+      gap: 8px;
+    }
+
+    .option-card {
+      flex: 1;
+      padding: 10px;
+      background: #57606f;
+      border: 2px solid transparent;
+      border-radius: 8px;
+      color: #fff;
+      font-weight: bold;
+      font-size: 0.95rem;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+    }
+
+    .option-card:hover {
+      background: #747d8c;
+    }
+
+    /* 선택되었을 때의 스타일 */
+    .option-card.selected {
+      background: #ff4757;
+      border-color: #ffa502;
+      box-shadow: 0 0 10px rgba(255, 71, 87, 0.5);
+    }
+
+    .form-group-input {
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
 
-    select, input {
+    input {
       padding: 8px 12px;
       border-radius: 6px;
       border: 1px solid #57606f;
@@ -126,7 +169,7 @@
       background: #ff6b81;
     }
 
-    button {
+    button.start-btn {
       padding: 12px;
       background: #ff4757;
       color: white;
@@ -137,10 +180,11 @@
       cursor: pointer;
       transition: 0.2s;
       margin-top: 5px;
+      width: 100%;
     }
 
-    button:hover { background: #ff6b81; }
-    button:disabled { background: #57606f; cursor: not-allowed; }
+    button.start-btn:hover { background: #ff6b81; }
+    button.start-btn:disabled { background: #57606f; cursor: not-allowed; }
 
     /* 경주 트랙 */
     .track-container {
@@ -282,6 +326,18 @@
     .name-input-group input {
       width: 100%;
     }
+
+    .modal-btn {
+      padding: 12px;
+      background: #ff4757;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.2s;
+    }
   </style>
 </head>
 <body>
@@ -298,26 +354,28 @@
         </div>
         
         <div class="betting-form">
-          <div class="form-group">
-            <label for="snail-select">달팽이 선택:</label>
-            <select id="snail-select">
-              <option value="1">1번 달팽이</option>
-              <option value="2">2번 달팽이</option>
-              <option value="3">3번 달팽이</option>
-            </select>
+          <!-- 달팽이 선택 (3개 칸 분할) -->
+          <div class="form-group-custom">
+            <span class="form-label">달팽이 선택</span>
+            <div class="option-grid" id="snail-options">
+              <div class="option-card selected" onclick="selectSnail(1, this)">1번 달팽이</div>
+              <div class="option-card" onclick="selectSnail(2, this)">2번 달팽이</div>
+              <div class="option-card" onclick="selectSnail(3, this)">3번 달팽이</div>
+            </div>
           </div>
 
-          <div class="form-group">
-            <label for="odds-select">배당률 선택:</label>
-            <select id="odds-select">
-              <option value="2.0">2배 </option>
-              <option value="3.0" selected>3배 </option>
-              <option value="4.0">4배 </option>
-            </select>
+          <!-- 배당률 선택 (3개 칸 분할) -->
+          <div class="form-group-custom">
+            <span class="form-label">배당률 선택</span>
+            <div class="option-grid" id="odds-options">
+              <div class="option-card" onclick="selectOdds(2.0, this)">2배</div>
+              <div class="option-card selected" onclick="selectOdds(3.0, this)">3배</div>
+              <div class="option-card" onclick="selectOdds(4.0, this)">4배</div>
+            </div>
           </div>
 
-          <div class="form-group">
-            <label for="bet-amount">베팅 금액 (원):</label>
+          <div class="form-group-input">
+            <label for="bet-amount" class="form-label">베팅 금액 (원):</label>
             <input type="number" id="bet-amount" value="1000" min="100" step="100">
           </div>
 
@@ -328,7 +386,7 @@
             <button class="btn-quick btn-allin" onclick="setAllIn()">올인</button>
           </div>
 
-          <button id="start-btn" onclick="startRace()">베팅하고 레이스 시작</button>
+          <button id="start-btn" class="start-btn" onclick="startRace()">베팅하고 레이스 시작</button>
         </div>
       </div>
 
@@ -379,7 +437,7 @@
         <span style="font-size:0.8rem; color: #555; font-weight:normal;">(한국도박문제예방치유원 24시간 온라인/비대면 상담)</span>
       </a>
 
-      <button onclick="saveAndResetGame()" style="margin-top: 18px; width: 100%;"><b>기록 저장 후 다시 하기</b></button>
+      <button class="modal-btn" onclick="saveAndResetGame()" style="margin-top: 18px; width: 100%;"><b>기록 저장 후 다시 하기</b></button>
     </div>
   </div>
 
@@ -450,9 +508,30 @@
     let playCount = 0;
     const MAX_PLAY_COUNT = 5;
 
+    // 선택 상태 변수 (기본값: 1번 달팽이, 3배)
+    let selectedSnail = 1;
+    let selectedOdds = 3.0;
+
     window.onload = function() {
       renderLeaderboard();
     };
+
+    // --- [달팽이 및 배당률 카드 선택 함수] ---
+    function selectSnail(snailNum, el) {
+      if (isRacing) return;
+      selectedSnail = snailNum;
+      const options = document.querySelectorAll('#snail-options .option-card');
+      options.forEach(opt => opt.classList.remove('selected'));
+      el.classList.add('selected');
+    }
+
+    function selectOdds(oddsNum, el) {
+      if (isRacing) return;
+      selectedOdds = oddsNum;
+      const options = document.querySelectorAll('#odds-options .option-card');
+      options.forEach(opt => opt.classList.remove('selected'));
+      el.classList.add('selected');
+    }
 
     function updateDisplay() {
       document.getElementById('balance').innerText = balance.toLocaleString();
@@ -485,8 +564,6 @@
       }
 
       const betAmount = parseInt(document.getElementById('bet-amount').value);
-      const selectedSnail = parseInt(document.getElementById('snail-select').value);
-      const selectedOdds = parseFloat(document.getElementById('odds-select').value);
       const resultDiv = document.getElementById('result');
 
       if (isNaN(betAmount) || betAmount <= 0) {
