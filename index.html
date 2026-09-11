@@ -276,16 +276,11 @@
     .name-input-group {
       margin: 15px 0;
       display: flex;
-      gap: 10px;
+      justify-content: center;
     }
 
     .name-input-group input {
-      width: 70%;
-    }
-
-    .name-input-group button {
-      width: 30%;
-      margin: 0;
+      width: 100%;
     }
   </style>
 </head>
@@ -371,7 +366,6 @@
 
       <div class="name-input-group">
         <input type="text" id="player-name" placeholder="학번 이름 (20610 박은찬)" maxlength="20">
-        <button onclick="saveRecord()">기록 저장</button>
       </div>
 
       <hr style="border-color: #57606f; margin: 15px 0;">
@@ -385,7 +379,7 @@
         <span style="font-size:0.8rem; color: #555; font-weight:normal;">(한국도박문제예방치유원 24시간 온라인/비대면 상담)</span>
       </a>
 
-      <button onclick="resetGame()" style="margin-top: 18px; width: 100%;"><b>초기화</b></button>
+      <button onclick="saveAndResetGame()" style="margin-top: 18px; width: 100%;"><b>기록 저장 후 다시 하기</b></button>
     </div>
   </div>
 
@@ -671,10 +665,12 @@
       });
     }
 
-    function saveRecord() {
+    // 기록 저장 후 게임 초기화를 동시에 수행하는 함수
+    function saveAndResetGame() {
       const nameInput = document.getElementById('player-name');
       const name = nameInput.value.trim() || "익명";
 
+      // 리더보드에 저장
       const board = getLeaderboard();
       board.push({ name: name, amount: balance });
       board.sort((a, b) => b.amount - a.amount);
@@ -682,14 +678,12 @@
       localStorage.setItem('snail_leaderboard', JSON.stringify(board.slice(0, 10)));
       renderLeaderboard();
 
-      alert('리더보드에 기록이 저장되었습니다!');
-      nameInput.value = '';
-    }
-
-    function resetGame() {
+      // 게임 리셋
       balance = 5000;
       playCount = 0;
       updateDisplay();
+      
+      nameInput.value = '';
       document.getElementById('game-over-modal').style.display = 'none';
       document.getElementById('start-btn').disabled = false;
       document.getElementById('result').innerText = "";
