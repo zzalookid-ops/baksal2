@@ -92,7 +92,7 @@
       color: #dcdde1;
     }
 
-    /* 3개 버튼 선택 박스 스타일 */
+    /* 선택 박스 스타일 통일 */
     .option-grid {
       display: flex;
       gap: 8px;
@@ -122,50 +122,34 @@
       box-shadow: 0 0 10px rgba(255, 71, 87, 0.5);
     }
 
-    .form-group-input {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+    /* 베팅 금액 선택용 그리드 (2열 또는 4열 구조) */
+    .bet-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
     }
 
-    input {
-      padding: 8px 12px;
-      border-radius: 6px;
-      border: 1px solid #57606f;
-      background: #747d8c;
-      color: white;
-      font-size: 1rem;
-      width: 60%;
-    }
-
-    .quick-bet-container {
-      display: flex;
-      gap: 6px;
-      justify-content: flex-end;
-      margin-top: -4px;
-      flex-wrap: wrap;
-    }
-
-    .btn-quick {
-      padding: 6px 10px;
-      font-size: 0.8rem;
+    .bet-card {
+      padding: 12px 6px;
       background: #57606f;
-      color: white;
-      border: none;
-      border-radius: 4px;
+      border: 2px solid transparent;
+      border-radius: 8px;
+      color: #fff;
+      font-weight: bold;
+      font-size: 0.9rem;
       cursor: pointer;
-      transition: background 0.2s;
+      text-align: center;
+      transition: all 0.2s;
     }
 
-    .btn-quick:hover {
+    .bet-card:hover {
       background: #747d8c;
     }
 
-    .btn-allin {
+    .bet-card.selected {
       background: #ff4757;
-    }
-    .btn-allin:hover {
-      background: #ff6b81;
+      border-color: #ffa502;
+      box-shadow: 0 0 10px rgba(255, 71, 87, 0.5);
     }
 
     button.start-btn {
@@ -246,7 +230,7 @@
       text-align: center;
       border-bottom: 1px solid #57606f;
       padding-bottom: 10px;
-      cursor: pointer; /* 히든 초기화용 인터랙션 */
+      cursor: pointer; /* 히든 초기화용 */
       user-select: none;
     }
 
@@ -326,6 +310,12 @@
 
     .name-input-group input {
       width: 100%;
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid #57606f;
+      background: #747d8c;
+      color: white;
+      font-size: 1rem;
     }
 
     .modal-btn {
@@ -375,18 +365,15 @@
             </div>
           </div>
 
-          <div class="form-group-input">
-            <label for="bet-amount" class="form-label">베팅 금액 (원):</label>
-            <input type="number" id="bet-amount" value="1000" min="100" step="100">
-          </div>
-
-          <!-- 회전율을 높이기 위한 세분화된 퀵 베팅 버튼 -->
-          <div class="quick-bet-container">
-            <button class="btn-quick" onclick="setBet(1000)">1천</button>
-            <button class="btn-quick" onclick="setBet(3000)">3천</button>
-            <button class="btn-quick" onclick="setBet(5000)">5천</button>
-            <button class="btn-quick" onclick="adjustBet(1000)">+1천</button>
-            <button class="btn-quick btn-allin" onclick="setAllIn()">올인</button>
+          <!-- 입력창 대신 순수 선택형 베팅 금액 버튼 그리드 -->
+          <div class="form-group-custom">
+            <span class="form-label">베팅 금액 선택</span>
+            <div class="bet-grid" id="bet-options">
+              <div class="bet-card selected" onclick="selectBet(1000, this)">1,000원</div>
+              <div class="bet-card" onclick="selectBet(3000, this)">3,000원</div>
+              <div class="bet-card" onclick="selectBet(5000, this)">5,000원</div>
+              <div class="bet-card" onclick="selectBet('all', this)" style="background:#ff4757; color:#fff;">올인</div>
+            </div>
           </div>
 
           <button id="start-btn" class="start-btn" onclick="startRace()">베팅하고 레이스 시작</button>
@@ -413,8 +400,8 @@
 
     <div class="sidebar">
       <div class="leaderboard">
-        <!-- 리더보드 타이틀을 3번 연속 클릭하면 히든 초기화 기능이 작동하도록 숨김 처리함 -->
-        <h2 onclick="hiddenResetLeaderboard()" title="">🏆 순위 🏆</h2>
+        <!-- 리더보드 타이틀을 3번 빠르게 연속 클릭하면 히든 초기화 기능이 작동합니다 -->
+        <h2 onclick="hiddenResetLeaderboard()">🏆 순위 🏆</h2>
         <ul id="leaderboard-list" class="leaderboard-list">
         </ul>
       </div>
@@ -514,6 +501,7 @@
 
     let selectedSnail = 1;
     let selectedOdds = 3.0;
+    let selectedBetAmount = 1000; // 기본 선택 베팅금액
 
     window.onload = function() {
       renderLeaderboard();
@@ -535,33 +523,30 @@
       el.classList.add('selected');
     }
 
+    // --- [베팅 금액 카드 선택 함수] ---
+    function selectBet(amount, el) {
+      if (isRacing) return;
+      
+      if (amount === 'all') {
+        selectedBetAmount = balance > 0 ? balance : 100;
+      } else {
+        // 보유 금액보다 선택한 금액이 많을 경우 보유 금액으로 맞춤
+        selectedBetAmount = amount > balance ? (balance > 0 ? balance : 100) : amount;
+      }
+
+      const options = document.querySelectorAll('#bet-options .bet-card');
+      options.forEach(opt => opt.classList.remove('selected'));
+      el.classList.add('selected');
+    }
+
     function updateDisplay() {
       document.getElementById('balance').innerText = balance.toLocaleString();
       document.getElementById('remaining-count').innerText = MAX_PLAY_COUNT - playCount;
-    }
 
-    // --- [회전율을 높이기 위한 베팅 조절 편의 기능들] ---
-    function setBet(amount) {
-      const input = document.getElementById('bet-amount');
-      let target = amount;
-      if (target > balance) target = balance > 0 ? balance : 100;
-      input.value = target;
-    }
-
-    function adjustBet(amount) {
-      const input = document.getElementById('bet-amount');
-      let currentVal = parseInt(input.value) || 0;
-      let newVal = currentVal + amount;
-      
-      if (newVal < 100) newVal = 100;
-      if (newVal > balance) newVal = balance;
-      
-      input.value = newVal;
-    }
-
-    function setAllIn() {
-      const input = document.getElementById('bet-amount');
-      input.value = balance > 0 ? balance : 100;
+      // 잔액이 변했을 때 현재 선택된 베팅금이 잔액보다 커졌다면 자동 조정
+      if (selectedBetAmount > balance) {
+        selectedBetAmount = balance > 0 ? balance : 100;
+      }
     }
 
     // --- [히든 리더보드 초기화 기능] ---
@@ -586,11 +571,11 @@
         return;
       }
 
-      const betAmount = parseInt(document.getElementById('bet-amount').value);
+      const betAmount = selectedBetAmount;
       const resultDiv = document.getElementById('result');
 
       if (isNaN(betAmount) || betAmount <= 0) {
-        alert('올바른 베팅 금액을 입력하세요.');
+        alert('올바른 베팅 금액을 선택하세요.');
         return;
       }
       if (betAmount > balance) {
@@ -768,6 +753,15 @@
 
       balance = 5000;
       playCount = 0;
+      selectedBetAmount = 1000;
+      
+      // 베팅 버튼 선택 상태도 기본값(1천원)으로 복원
+      const betCards = document.querySelectorAll('#bet-options .bet-card');
+      betCards.forEach((card, idx) => {
+        if (idx === 0) card.classList.add('selected');
+        else card.classList.remove('selected');
+      });
+
       updateDisplay();
       
       nameInput.value = '';
