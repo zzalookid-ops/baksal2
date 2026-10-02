@@ -116,7 +116,6 @@
       background: #747d8c;
     }
 
-    /* 선택되었을 때의 스타일 */
     .option-card.selected {
       background: #ff4757;
       border-color: #ffa502;
@@ -141,21 +140,21 @@
 
     .quick-bet-container {
       display: flex;
-      gap: 8px;
+      gap: 6px;
       justify-content: flex-end;
       margin-top: -4px;
+      flex-wrap: wrap;
     }
 
     .btn-quick {
-      padding: 6px 12px;
-      font-size: 0.85rem;
+      padding: 6px 10px;
+      font-size: 0.8rem;
       background: #57606f;
       color: white;
       border: none;
       border-radius: 4px;
       cursor: pointer;
       transition: background 0.2s;
-      margin-top: 0;
     }
 
     .btn-quick:hover {
@@ -201,7 +200,7 @@
       margin-bottom: 15px;
       border-radius: 25px;
       overflow: hidden;
-      border-right: 6px solid #ffa502; /* 결승선 */
+      border-right: 6px solid #ffa502;
     }
 
     .snail {
@@ -247,6 +246,8 @@
       text-align: center;
       border-bottom: 1px solid #57606f;
       padding-bottom: 10px;
+      cursor: pointer; /* 히든 초기화용 인터랙션 */
+      user-select: none;
     }
 
     .leaderboard-list {
@@ -275,7 +276,7 @@
       padding: 20px 0;
     }
 
-    /* 결과 알림 모달 */
+    /* 모달 */
     .modal {
       display: none;
       position: fixed;
@@ -354,7 +355,7 @@
         </div>
         
         <div class="betting-form">
-          <!-- 달팽이 선택 (3개 칸 분할) -->
+          <!-- 달팽이 선택 -->
           <div class="form-group-custom">
             <span class="form-label">달팽이 선택</span>
             <div class="option-grid" id="snail-options">
@@ -364,7 +365,7 @@
             </div>
           </div>
 
-          <!-- 배당률 선택 (3개 칸 분할) -->
+          <!-- 배당률 선택 -->
           <div class="form-group-custom">
             <span class="form-label">배당률 선택</span>
             <div class="option-grid" id="odds-options">
@@ -379,10 +380,12 @@
             <input type="number" id="bet-amount" value="1000" min="100" step="100">
           </div>
 
-          <!-- 편리한 베팅 금액 조절 버튼 -->
+          <!-- 회전율을 높이기 위한 세분화된 퀵 베팅 버튼 -->
           <div class="quick-bet-container">
-            <button class="btn-quick" onclick="adjustBet(-1000)">-1000</button>
-            <button class="btn-quick" onclick="adjustBet(1000)">+1000</button>
+            <button class="btn-quick" onclick="setBet(1000)">1천</button>
+            <button class="btn-quick" onclick="setBet(3000)">3천</button>
+            <button class="btn-quick" onclick="setBet(5000)">5천</button>
+            <button class="btn-quick" onclick="adjustBet(1000)">+1천</button>
             <button class="btn-quick btn-allin" onclick="setAllIn()">올인</button>
           </div>
 
@@ -410,7 +413,8 @@
 
     <div class="sidebar">
       <div class="leaderboard">
-        <h2>🏆 순위 🏆</h2>
+        <!-- 리더보드 타이틀을 3번 연속 클릭하면 히든 초기화 기능이 작동하도록 숨김 처리함 -->
+        <h2 onclick="hiddenResetLeaderboard()" title="">🏆 순위 🏆</h2>
         <ul id="leaderboard-list" class="leaderboard-list">
         </ul>
       </div>
@@ -508,7 +512,6 @@
     let playCount = 0;
     const MAX_PLAY_COUNT = 5;
 
-    // 선택 상태 변수 (기본값: 1번 달팽이, 3배)
     let selectedSnail = 1;
     let selectedOdds = 3.0;
 
@@ -516,7 +519,6 @@
       renderLeaderboard();
     };
 
-    // --- [달팽이 및 배당률 카드 선택 함수] ---
     function selectSnail(snailNum, el) {
       if (isRacing) return;
       selectedSnail = snailNum;
@@ -538,7 +540,14 @@
       document.getElementById('remaining-count').innerText = MAX_PLAY_COUNT - playCount;
     }
 
-    // --- [배팅금 조절 편의 기능] ---
+    // --- [회전율을 높이기 위한 베팅 조절 편의 기능들] ---
+    function setBet(amount) {
+      const input = document.getElementById('bet-amount');
+      let target = amount;
+      if (target > balance) target = balance > 0 ? balance : 100;
+      input.value = target;
+    }
+
     function adjustBet(amount) {
       const input = document.getElementById('bet-amount');
       let currentVal = parseInt(input.value) || 0;
@@ -553,6 +562,20 @@
     function setAllIn() {
       const input = document.getElementById('bet-amount');
       input.value = balance > 0 ? balance : 100;
+    }
+
+    // --- [히든 리더보드 초기화 기능] ---
+    let resetClicks = 0;
+    function hiddenResetLeaderboard() {
+      resetClicks++;
+      if (resetClicks >= 3) {
+        if (confirm("리더보드 기록을 초기화하시겠습니까?")) {
+          localStorage.removeItem('snail_leaderboard');
+          renderLeaderboard();
+          alert("리더보드가 초기화되었습니다.");
+        }
+        resetClicks = 0;
+      }
     }
 
     function startRace() {
@@ -576,7 +599,7 @@
       }
 
       const playerIndex = selectedSnail - 1;
-      const totalExpectedWin = betAmount * selectedOdds; // 배팅금 x 배당률
+      const totalExpectedWin = betAmount * selectedOdds;
 
       balance -= betAmount;
       playCount++;
@@ -598,35 +621,28 @@
 
       snailElements.forEach(s => s.style.left = '0%');
 
-      // --- [확률 조정 시스템] ---
       let winRate = 0.50;
 
       if (playCount <= 2) {
-        // 1, 2회 차: 초반 도파민 제공 (승율 80%)
         winRate = 0.80;
       } else if (playCount === 3) {
-        // 3회 차: 4,000원 이상 배팅 시 실패 확률 68% (승리 확률 32%)
         winRate = (betAmount >= 4000) ? 0.32 : 0.50;
       } else {
-        // 4, 5회 차: 7,000원 이상 배팅 시 실패 확률 85% (승리 확률 15%)
         winRate = (betAmount >= 7000) ? 0.15 : 0.25;
       }
 
-      // [배팅금 x 배당률 > 20,000원 조건]: 실패 확률 94% (승리 확률 6%)
       if (totalExpectedWin > 20000) {
         winRate = 0.06;
       }
 
       const isPlayerWin = Math.random() < winRate;
 
-      // 승리 달팽이 결정
       let winnerIndex = playerIndex;
       if (!isPlayerWin) {
         const losers = [0, 1, 2].filter(idx => idx !== playerIndex);
         winnerIndex = losers[Math.floor(Math.random() * losers.length)];
       }
 
-      // --- [역동적 레이스 연출: 치고 나가다 뒤처진 뒤 극적 역전/패배] ---
       let toggle = false;
 
       const interval = setInterval(() => {
@@ -637,17 +653,14 @@
           let speed = 0.4 + Math.random() * 0.1;
 
           if (maxPos < 40) {
-            // [0~40% 구간]: 내 달팽이가 치고 나가며 선두 유지 (기대감 부여)
             if (i === playerIndex) speed += 0.15;
             else speed += (Math.random() * 0.03);
           } else if (maxPos >= 40 && maxPos < 75) {
-            // [40~75% 구간]: 내 달팽이가 둔화되면서 3등으로 뒤처짐 (아슬아슬한 긴장감)
             if (i === playerIndex) speed -= 0.12;
             else speed += 0.12;
           } else {
-            // [75~90% 구간]: 막판 스퍼트로 치고 나가 승패 갈림 (극적 역전 연출)
             if (i === playerIndex) {
-              speed += isPlayerWin ? 0.40 : -0.10; // 승리 시 폭발적 스퍼트, 패배 시 차이 벌어짐
+              speed += isPlayerWin ? 0.40 : -0.10;
             } else if (i === winnerIndex) {
               speed += 0.35;
             }
@@ -742,12 +755,10 @@
       });
     }
 
-    // 기록 저장 후 게임 초기화를 동시에 수행하는 함수
     function saveAndResetGame() {
       const nameInput = document.getElementById('player-name');
       const name = nameInput.value.trim() || "익명";
 
-      // 리더보드에 저장
       const board = getLeaderboard();
       board.push({ name: name, amount: balance });
       board.sort((a, b) => b.amount - a.amount);
@@ -755,7 +766,6 @@
       localStorage.setItem('snail_leaderboard', JSON.stringify(board.slice(0, 10)));
       renderLeaderboard();
 
-      // 게임 리셋
       balance = 5000;
       playCount = 0;
       updateDisplay();
