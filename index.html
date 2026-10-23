@@ -161,12 +161,20 @@
       border: none;
       border-radius: 6px;
       cursor: pointer;
-      transition: background 0.2s;
+      transition: all 0.2s;
       text-align: center;
     }
 
     .btn-bet-action:hover {
       background: #747d8c;
+    }
+
+    /* 비활성화(disabled) 상태 버튼 스타일 */
+    .btn-bet-action:disabled {
+      background: #3d4451 !important;
+      color: #747d8c !important;
+      cursor: not-allowed !important;
+      opacity: 0.6;
     }
 
     .btn-bet-action.btn-allin {
@@ -397,8 +405,8 @@
                 현재 베팅금: <span id="current-bet-text">1,000원</span>
               </div>
               <div class="bet-btn-grid">
-                <button class="btn-bet-action" onclick="adjustBet(-1000)">-1000</button>
-                <button class="btn-bet-action" onclick="adjustBet(1000)">+1000</button>
+                <button id="btn-minus" class="btn-bet-action" onclick="adjustBet(-1000)">-1000</button>
+                <button id="btn-plus" class="btn-bet-action" onclick="adjustBet(1000)">+1000</button>
                 <button class="btn-bet-action btn-allin" onclick="setAllIn()">올인</button>
               </div>
             </div>
@@ -552,8 +560,17 @@
       el.classList.add('selected');
     }
 
+    // --- [베팅 금액 표시 및 -1000 버튼 비활성화 제어] ---
     function updateBetDisplay() {
       document.getElementById('current-bet-text').innerText = currentBet.toLocaleString() + '원';
+      
+      const minusBtn = document.getElementById('btn-minus');
+      // 베팅금액이 1000원 이하이면 -1000 버튼 비활성화 (회색)
+      if (currentBet <= 1000) {
+        minusBtn.disabled = true;
+      } else {
+        minusBtn.disabled = false;
+      }
     }
 
     function updateDisplay() {
@@ -562,7 +579,7 @@
 
       // 보유 잔액이 현재 베팅 금액보다 적어지면 베팅 금액을 잔액에 맞춤
       if (currentBet > balance) {
-        currentBet = balance > 0 ? balance : 100;
+        currentBet = balance > 0 ? balance : 1000;
       }
       updateBetDisplay();
     }
@@ -572,7 +589,7 @@
       if (isRacing) return;
       let newVal = currentBet + amount;
 
-      if (newVal < 100) newVal = 100;
+      if (newVal < 1000) newVal = 1000;
       if (newVal > balance) newVal = balance;
 
       currentBet = newVal;
@@ -581,7 +598,7 @@
 
     function setAllIn() {
       if (isRacing) return;
-      currentBet = balance > 0 ? balance : 100;
+      currentBet = balance > 0 ? balance : 1000;
       updateBetDisplay();
     }
 
